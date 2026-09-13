@@ -116,7 +116,7 @@ export async function saveWorkItem(item: WorkItem, input: { name: string; leadDe
     target_status: input.status,
     participant_ids: input.participantIds,
   })
-  if (error) throw error
+  if (error) throw new Error(error.message)
 }
 
 export async function createWorkItem(input: { projectId: string; parentId: string | null; wbs: string; name: string; leadDepartmentId: string; coordinatingDepartmentIds: string[]; startDate: string; endDate: string; status: WorkItemStatus; participantIds: string[] }): Promise<string> {
@@ -133,7 +133,7 @@ export async function createWorkItem(input: { projectId: string; parentId: strin
     target_status: input.status,
     participant_ids: input.participantIds,
   })
-  if (error) throw error
+  if (error) throw new Error(error.message)
   if (!data) throw new Error('Không tạo được hạng mục/công việc.')
   return data as string
 }
@@ -148,7 +148,7 @@ export async function importProjectPlan(projectId: string, items: ImportedWorkIt
   if (!supabase) throw new Error('Chưa cấu hình Supabase.')
   const payload = items.map((item) => ({ client_id: item.client_id, parent_client_id: item.parent_client_id, wbs: item.wbs, name: item.name, responsibility: item.responsibility, start_date: item.start_date, end_date: item.end_date, sort_order: item.sort_order }))
   const { error } = await supabase.rpc('import_project_plan', { target_project_id: projectId, plan_items: payload })
-  if (error) throw error
+  if (error) throw new Error(error.message)
 }
 
 export async function cloneProjectPlan(targetProjectId: string, sourceProjectId: string, targetStartDate: string) {
@@ -237,7 +237,7 @@ export async function saveWorkItemParticipants(item: WorkItem, participantIds: s
     expected_version: item.version,
     participant_ids: participantIds,
   })
-  if (error) throw error
+  if (error) throw new Error(error.message)
 }
 
 export async function uploadEvidence(workItemId: string, file: File, userId: string) {

@@ -69,3 +69,4 @@ Ghi các quyết định ảnh hưởng đến phạm vi, dữ liệu, kiến tr
 - Nhật ký dùng cùng quyền ghi diễn biến với panel công việc: Quản trị hệ thống, Quản trị dự án trong phạm vi được giao hoặc người tham gia. Không loại công việc chờ duyệt/hoàn thành vì chỉ bằng chứng bị khóa.
 - Trạng thái mục cha trên Gantt được tính từ công việc cuối nhánh; không lấy trạng thái lưu riêng của mục cha làm kết quả tổng hợp.
 - Bộ dữ liệu kiểm thử chỉ nằm trong các dự án demo; không thay đổi Khe Tre/Sơn Tây. Có kế hoạch 21 phòng/ban và các tình huống phối hợp, từ chối–nộp lại, quyền quản trị theo dự án, tài khoản ngừng hoạt động và log xóa.
+- Chặn bỏ qua quy trình nộp bằng chứng ở mọi đường ghi dữ liệu, kể cả request trực tiếp: vào Chờ duyệt/Hoàn thành cần đúng một tệp và lượt nộp có kết quả tương ứng. Không đổi trực tiếp trạng thái đã nộp về đang mở để mở khóa bằng chứng; luồng từ chối hợp lệ vẫn mở lại. Metadata, diễn biến và thêm con vẫn theo quyền hiện có.
