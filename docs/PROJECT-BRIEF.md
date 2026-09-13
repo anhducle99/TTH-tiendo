@@ -66,7 +66,7 @@ Phòng Phát triển phòng khám (PTPK) đang theo dõi tiến độ dự án b
 4. Tải file Excel mẫu; import sheet đầu của file kế hoạch đã được TGĐ phê duyệt, xem trước và xác nhận.
 5. Quản trị hệ thống và Quản trị dự án quản lý cấu trúc hạng mục/công việc. Quản trị phòng/ban được phân công người tham gia theo phạm vi đơn vị chủ trì hoặc phối hợp nhưng không được thay đổi cấu trúc kế hoạch đã chốt.
 6. Xem Gantt, tổng quan và công việc cần xử lý.
-7. Cập nhật diễn biến, nguyên nhân chậm và bằng chứng.
+7. Cập nhật diễn biến, nguyên nhân chậm và bằng chứng. Trang Nhật ký và panel công việc dùng cùng quyền ghi diễn biến: Quản trị hệ thống, Quản trị dự án trong phạm vi được giao hoặc người tham gia; diễn biến vẫn được bổ sung khi công việc chờ duyệt/hoàn thành.
 8. Nhân viên và Quản trị phòng/ban thuộc đơn vị phối hợp gửi hoàn thành để Quản trị phòng của đơn vị chủ trì hoặc Quản trị dự án duyệt/từ chối; Quản trị phòng được giao việc do chính phòng mình chủ trì và Quản trị dự án vẫn phải tải bằng chứng, bấm nộp nhưng công việc chuyển thẳng sang Hoàn thành.
 9. Quản lý mốc kiểm soát theo dự án.
 10. Lưu audit log và export dữ liệu.

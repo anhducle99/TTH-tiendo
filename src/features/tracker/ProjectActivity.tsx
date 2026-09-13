@@ -4,6 +4,7 @@ import { addProgress, getProjectActivity, getWorkItems, markProjectActivitySeen,
 import { ProjectHeader } from './ProjectHeader'
 import { useAutoRefresh } from '../../lib/useAutoRefresh'
 import { useToast } from '../../components/toastContext'
+import { canEditWorkItem } from '../../lib/permissions'
 
 type ActivityFilter = 'all' | 'progress' | 'approval' | 'deleted'
 const PAGE_SIZE = 10
@@ -39,8 +40,8 @@ export function ProjectActivity({ project, profile, canViewDeleteAudit, onBack, 
 
   const writableItems = useMemo(() => {
     const parentIds = new Set(workItems.map((item) => item.parent_id).filter((id): id is string => Boolean(id)))
-    return workItems.filter((item) => item.parent_id !== null && !parentIds.has(item.id) && item.status !== 'pending_approval' && item.status !== 'completed' && (profile.role === 'manager' || item.participant_ids.includes(profile.id)))
-  }, [profile.id, profile.role, workItems])
+    return workItems.filter((item) => item.parent_id !== null && !parentIds.has(item.id) && canEditWorkItem({ role: profile.role, canManageProject: project.can_manage, userId: profile.id, participantIds: item.participant_ids }))
+  }, [profile.id, profile.role, project.can_manage, workItems])
   const activityCounts = useMemo(() => ({
     all: items.length,
     progress: items.filter((item) => item.kind === 'progress').length,

@@ -63,3 +63,9 @@ Ghi các quyết định ảnh hưởng đến phạm vi, dữ liệu, kiến tr
 - Lưu thông tin hoặc lưu phân công thành công: đóng panel và thông báo thành công.
 - Tải/xóa bằng chứng, ghi diễn biến: giữ panel và tab hiện tại để tiếp tục thao tác.
 - Khi lỗi: không chủ động đóng panel; hiển thị lỗi để người dùng kiểm tra.
+
+## Kiểm thử bổ sung ngày 2026-09-13
+
+- Nhật ký dùng cùng quyền ghi diễn biến với panel công việc: Quản trị hệ thống, Quản trị dự án trong phạm vi được giao hoặc người tham gia. Không loại công việc chờ duyệt/hoàn thành vì chỉ bằng chứng bị khóa.
+- Trạng thái mục cha trên Gantt được tính từ công việc cuối nhánh; không lấy trạng thái lưu riêng của mục cha làm kết quả tổng hợp.
+- Bộ dữ liệu kiểm thử chỉ nằm trong các dự án demo; không thay đổi Khe Tre/Sơn Tây. Có kế hoạch 21 phòng/ban và các tình huống phối hợp, từ chối–nộp lại, quyền quản trị theo dự án, tài khoản ngừng hoạt động và log xóa.
