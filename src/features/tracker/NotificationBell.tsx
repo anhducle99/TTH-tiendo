@@ -24,6 +24,7 @@ interface NotificationBellProps {
 export function NotificationBell({ items, loading, onOpen, onMarkAllSeen }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const unreadCount = items.filter((item) => item.isUnread).length
 
   useEffect(() => {
     if (!open) return
@@ -35,17 +36,17 @@ export function NotificationBell({ items, loading, onOpen, onMarkAllSeen }: Noti
   }, [open])
 
   return <div className="notification-root" ref={rootRef}>
-    <button className={`notification-bell ${open ? 'on' : ''}`} aria-label={`Thông báo${items.length ? `, ${items.length} chưa đọc` : ''}`} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+    <button className={`notification-bell ${open ? 'on' : ''}`} aria-label={`Thông báo${unreadCount ? `, ${unreadCount} chưa đọc` : ''}`} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
-      {items.length > 0 && <span className="notification-count">{items.length > 99 ? '99+' : items.length}</span>}
+      {unreadCount > 0 && <span className="notification-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
     </button>
     {open && <section className="notification-panel" aria-label="Danh sách thông báo">
-      <header><div><b>Thông báo</b><span>{items.length ? `${items.length} chưa đọc` : 'Không có thông báo mới'}</span></div>{items.length > 0 && <button disabled={loading} onClick={() => void onMarkAllSeen()}>Đánh dấu đã đọc</button>}</header>
+      <header><div><b>Thông báo</b><span>{unreadCount ? `${unreadCount} chưa đọc` : 'Đã xem hết'}</span></div>{unreadCount > 0 && <button disabled={loading} onClick={() => void onMarkAllSeen()}>Đánh dấu đã đọc</button>}</header>
       <div className="notification-list">
-        {loading && !items.length ? <div className="notification-empty">Đang tải thông báo…</div> : items.length ? items.map((item) => <button className={`notification-item notification-${item.kind}`} key={item.id} onClick={() => void onOpen(item).then((opened) => { if (opened) setOpen(false) })}>
-          <span className="notification-dot" />
+        {loading && !items.length ? <div className="notification-empty">Đang tải thông báo…</div> : items.length ? items.map((item) => <button className={`notification-item notification-${item.kind}${item.isUnread ? '' : ' seen'}`} key={item.id} onClick={() => void onOpen(item).then((opened) => { if (opened) setOpen(false) })}>
+          {item.isUnread && <span className="notification-dot" />}
           <span className="notification-copy"><b>{kindLabel[item.kind]}</b><strong>{item.work_item_wbs}. {item.work_item_name}</strong><span>{item.actor_name}: {item.content}</span><small>{item.project_name} · {relativeTime(item.created_at)}</small></span>
-        </button>) : <div className="notification-empty"><b>Đã xem hết thông báo</b><span>Các diễn biến và kết quả xét duyệt mới sẽ xuất hiện tại đây.</span></div>}
+        </button>) : <div className="notification-empty"><b>Không có thông báo</b><span>Các diễn biến và kết quả xét duyệt mới sẽ xuất hiện tại đây.</span></div>}
       </div>
     </section>}
   </div>

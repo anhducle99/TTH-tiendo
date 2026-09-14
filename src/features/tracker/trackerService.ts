@@ -206,7 +206,10 @@ export async function getPersonalNotifications(userId: string): Promise<Personal
   const pick = <T,>(value: T | T[] | null): T | null => Array.isArray(value) ? value[0] ?? null : value
   const seenAt = new Map((reads ?? []).map((row) => [row.work_item_id, row.last_seen_at]))
   const entries: PersonalNotification[] = []
-  const append = (entry: PersonalNotification) => { if (!seenAt.get(entry.work_item_id) || entry.created_at > seenAt.get(entry.work_item_id)!) entries.push(entry) }
+  const append = (entry: PersonalNotification) => {
+    const isUnread = !seenAt.get(entry.work_item_id) || entry.created_at > seenAt.get(entry.work_item_id)!
+    entries.push({ ...entry, isUnread })
+  }
 
   ;(progress ?? []).forEach((row) => {
     const work = pick(row.work_item); const project = work ? pick(work.project) : null; const actor = pick(row.author)
@@ -219,7 +222,7 @@ export async function getPersonalNotifications(userId: string): Promise<Personal
     if (row.submitted_by !== userId) append({ id: `submitted-${row.id}`, work_item_id: row.work_item_id, work_item_wbs: work.wbs, work_item_name: work.name, project_id: work.project_id, project_code: project.code, project_name: project.name, content: row.note ? `Gửi hoàn thành: ${row.note}` : 'Gửi công việc hoàn thành để duyệt.', actor_name: submitter?.full_name || submitter?.username || '—', created_at: row.submitted_at, kind: 'submitted' })
     if (row.status !== 'pending' && row.reviewed_at && row.reviewed_by !== userId) append({ id: `reviewed-${row.id}`, work_item_id: row.work_item_id, work_item_wbs: work.wbs, work_item_name: work.name, project_id: work.project_id, project_code: project.code, project_name: project.name, content: row.review_note || (row.status === 'approved' ? 'Đã duyệt hoàn thành.' : 'Đã từ chối yêu cầu hoàn thành.'), actor_name: reviewer?.full_name || reviewer?.username || '—', created_at: row.reviewed_at, kind: row.status as 'approved' | 'rejected' })
   })
-  return entries.sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 50)
+  return entries.sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 20)
 }
 
 export async function markNotificationsSeen(workItemIds: string[], userId: string) {

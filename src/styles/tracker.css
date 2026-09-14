@@ -25,6 +25,8 @@
 .notification-list { max-height: 480px; overflow-y: auto; }
 .notification-item { align-items: flex-start; background: #f8fbff; border: 0; border-bottom: 1px solid var(--line-2); color: var(--ink); cursor: pointer; display: flex; gap: 10px; padding: 11px 14px; text-align: left; width: 100%; }
 .notification-item:hover { background: var(--brand-soft); }
+.notification-item.seen { background: var(--surface-2); opacity: 0.7; }
+.notification-item.seen:hover { background: var(--surface-2); opacity: 0.85; }
 .notification-dot { background: var(--brand); border: 3px solid var(--brand-soft); border-radius: 50%; flex: 0 0 auto; height: 11px; margin-top: 3px; width: 11px; }
 .notification-approved .notification-dot { background: var(--st-done); border-color: var(--st-done-bg); }
 .notification-rejected .notification-dot { background: var(--st-late); border-color: var(--st-late-bg); }

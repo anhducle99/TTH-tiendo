@@ -180,12 +180,12 @@ export function TrackerShell() {
       const projects = await getProjects()
       const targetProject = projects.find((candidate) => candidate.id === notification.project_id)
       if (!targetProject) {
-        setNotifications((items) => items.filter((item) => item.work_item_id !== notification.work_item_id))
+        setNotifications((items) => items.map((item) => item.work_item_id === notification.work_item_id ? { ...item, isUnread: false } : item))
         return false
       }
       if (!profile) return false
       await markNotificationsSeen([notification.work_item_id], profile.id)
-      setNotifications((items) => items.filter((item) => item.work_item_id !== notification.work_item_id))
+      setNotifications((items) => items.map((item) => item.work_item_id === notification.work_item_id ? { ...item, isUnread: false } : item))
       trackDirty(false)
       setProject(targetProject)
       setSelectedWorkItemId(notification.work_item_id)
@@ -201,7 +201,7 @@ export function TrackerShell() {
     if (!profile) return
     try {
       await markNotificationsSeen(notifications.map((item) => item.work_item_id), profile.id)
-      setNotifications([])
+      setNotifications((items) => items.map((item) => ({ ...item, isUnread: false })))
       if (project) setUnreadActivityCount(0)
       notify('Đã đánh dấu tất cả thông báo là đã đọc.')
     } catch {
