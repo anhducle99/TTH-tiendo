@@ -639,7 +639,7 @@ function drawNav(){
     var on=m[0]==="Quản lý tiến độ công việc";
     h+='<a href="#" class="'+(on?"on":"")+'" data-nav="root">'+svg(m[1])+esc(m[0])+"</a>";
     if(on){
-      h+='<div class="sub"><button data-p="home" class="'+(ui.page==="home"?"on":"")+'">Danh mục dự án</button>';
+      h+='<div class="sub"><button data-p="home" class="'+(ui.page==="home"?"on":"")+'">Tổng quan công việc</button>';
       if(cur){
         var m2=meta(cur);
         h+='<div class="cap">'+esc(m2?m2.name:cur)+"</div>"+
@@ -1001,7 +1001,7 @@ function renderOverview(){
   function stat(a,l){return '<div class="stat"><b>'+a+"</b><span>"+l+"</span></div>"}
 }
 function head(m,sub){
-  return '<div class="ovhead"><div><div class="crumb"><button id="bk">Danh mục dự án</button> › '+esc(sub)+"</div>"+
+  return '<div class="ovhead"><div><div class="crumb"><button id="bk">Tổng quan công việc</button> › '+esc(sub)+"</div>"+
     "<h1>"+esc(m?m.name:"—")+'</h1><div class="muted tiny">'+esc(m&&m.site||"")+
     (m&&m.planStart?" · "+vn(m.planStart)+" – "+(m.planEnd?vn(m.planEnd):"chưa chốt hạn"):"")+
     (m&&m.note?" · "+esc(m.note):"")+"</div></div>"+

@@ -23,13 +23,13 @@ Giao diện làm việc được thiết kế tối giản, trực quan và tậ
 | TTH GROUP             [Bộ chọn Chi nhánh / Tag Chi nhánh]        [Chuông] [User]   |
 +-------------------+----------------------------------------------------------------+
 |                   |  QUẢN LÝ TIẾN ĐỘ CÔNG VIỆC                                     |
-|  MENU ĐIỀU HƯỚNG  |  Danh mục dự án                                                |
+|  MENU ĐIỀU HƯỚNG  |  Tổng quan tiến độ công việc                                   |
 |                   |  +----------------------------------------------------------+  |
-|  * Quản lý tiến   |  | Thống kê: Dự án theo dõi | Trễ hạn | Chưa lập tiến độ... |  |
+|  * Quản lý tiến   |  | Thống kê: Cơ sở đang chạy | Trễ hạn | Chưa lập KH...     |  |
 |    độ công việc   |  +----------------------------------------------------------+  |
-|    - Danh mục     |                                                                |
-|      dự án        |  [BẢNG DANH MỤC DỰ ÁN VỚI TỶ LỆ HOÀN THÀNH % & HẠN ĐỊNH]       |
-|    (Khi vào DA):  |  - Phòng khám Khe Tre (132 việc, hoàn thành 11%)               |
+|    - Tổng quan    |                                                                |
+|      công việc    |  [BẢNG TỔNG QUAN CÔNG VIỆC CÁC CƠ SỞ & TIẾN ĐỘ THỰC HIỆN]      |
+|    (Khi vào xem): |  - Phòng khám Khe Tre (132 việc, hoàn thành 11%)               |
 |    - Tiến độ Gantt|  - Phòng khám Quảng Ngãi                                       |
 |    - Tổng quan    |  - Phòng khám Nhà văn hoá...                                   |
 |    - Mốc K.Soát   |                                                                |
@@ -40,7 +40,7 @@ Giao diện làm việc được thiết kế tối giản, trực quan và tậ
 ### Các khu vực chính:
 - **Thanh bên trái (Sidebar):** 
   - Hiển thị phân hệ **Quản lý tiến độ công việc**.
-  - Bấm vào để mở danh mục toàn bộ dự án. Khi đang xem một dự án cụ thể, menu sẽ hiển thị chi tiết các mục con của dự án đó.
+  - Bấm vào mục **Tổng quan công việc** để theo dõi bức tranh toàn cảnh các cơ sở và kế hoạch đang chạy. Khi đang xem một cơ sở cụ thể, menu sẽ hiển thị chi tiết các mục con của cơ sở đó.
 - **Thanh đỉnh (Header):**
   - Cung cấp bộ lọc chi nhánh (dành cho Ban giám sát / Cán bộ Tổng công ty HQ).
   - Chuông thông báo tiến độ, phê duyệt và thông tin tài khoản đang làm việc.
