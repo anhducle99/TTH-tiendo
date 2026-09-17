@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ command }) => ({
-  plugins: [react()],
-  // GitHub Pages phục vụ ứng dụng trong thư mục mang tên repository.
-  // Dev server vẫn dùng / để giữ nguyên địa chỉ localhost hiện tại.
-  base: command === 'build' ? '/tien-do-phong-kham/' : '/',
-}))
+export default defineConfig(({ command, mode }) => {
+  const env = loadEnv(mode, '.', ['VERCEL', 'VITE_'])
+  return {
+    plugins: [react()],
+    base: env.VERCEL ? '/' : (env.VITE_BASE_PATH || (command === 'build' ? '/tien-do-phong-kham/' : '/')),
+  }
+})

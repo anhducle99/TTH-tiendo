@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/authContext'
 import { UsersPage } from '../users/UsersPage'
-import type { PersonalNotification, Project } from '../../types/domain'
+import type { Branch, PersonalNotification, Project } from '../../types/domain'
 import { PortfolioPage } from './PortfolioPage'
 import { GanttView } from './GanttView'
 import { MilestonesView } from './MilestonesView'
@@ -9,6 +9,7 @@ import { ApprovalsView } from './ApprovalsView'
 import { ProjectOverview } from './ProjectOverview'
 import { ProjectActivity } from './ProjectActivity'
 import { getPersonalNotifications, getProjects, getUnreadWorkItemCount, markNotificationsSeen } from './trackerService'
+import { listBranches } from '../users/userService'
 import { tthLogoDataUrl } from '../../assets/tthLogo'
 import { parseRouteHash, routeHash, type Page } from '../../lib/routes'
 import '../../styles/prototype.css'
@@ -25,6 +26,8 @@ export function TrackerShell() {
   const [page, setPage] = useState<Page>(initialRoute.page)
   const [project, setProject] = useState<Project | null>(null)
   const [selectedWorkItemId, setSelectedWorkItemId] = useState<string | null>(initialRoute.workItemId)
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
   const [clock, setClock] = useState(new Date())
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [unreadActivityCount, setUnreadActivityCount] = useState(0)
@@ -37,8 +40,18 @@ export function TrackerShell() {
   const confirm = useConfirm()
   const notify = useToast()
   const isSystemAdmin = profile?.role === 'manager'
-  const canManageProject = Boolean(isSystemAdmin || project?.can_manage)
-  const canReview = Boolean(isSystemAdmin || profile?.is_department_admin || hasManagedProject)
+  const isBranchAdmin = Boolean(profile?.is_branch_admin)
+  const isHeadquartersUser = Boolean(isSystemAdmin || profile?.branch?.is_headquarters || !profile?.branch_id)
+  const canManageProject = Boolean(isSystemAdmin || (isBranchAdmin && isHeadquartersUser) || isBranchAdmin || project?.can_manage)
+  const canReview = Boolean(isSystemAdmin || isBranchAdmin || profile?.is_department_admin || hasManagedProject)
+
+  const activeBranchId = isHeadquartersUser ? selectedBranchId : (profile?.branch_id ?? null)
+
+  useEffect(() => {
+    void listBranches().then((list) => {
+      setBranches(list)
+    }).catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'light'
@@ -216,14 +229,37 @@ export function TrackerShell() {
   return <div className="app tracker-app">
     <aside className="side">
       <div className="brandbox"><img className="tth-logo" src={tthLogoDataUrl} alt="TTH GROUP" /><div><b>TTH GROUP</b><span>Nền tảng điều hành số</span></div></div>
-      <div className="navwrap"><div className="navlabel">Quản lý khảo sát mặt bằng</div><nav className="nav"><div className="sub root-sub">
+      <div className="navwrap"><div className="navlabel">Quản lý tiến độ công việc</div><nav className="nav"><div className="sub root-sub">
         <button className={page === 'projects' ? 'on' : ''} onClick={backToPortfolio}>Danh mục dự án</button>
         {project && <><div className="cap">{project.name}</div><button className={page === 'overview' ? 'on' : ''} onClick={() => navigate('overview')}>Tổng quan dự án</button><button className={page === 'gantt' ? 'on' : ''} onClick={() => navigate('gantt')}>Tiến độ &amp; Gantt</button><button className={page === 'milestones' ? 'on' : ''} onClick={() => navigate('milestones')}>Mốc kiểm soát</button><button className={page === 'activity' ? 'on' : ''} onClick={() => navigate('activity')}><span>Nhật ký diễn biến</span>{unreadActivityCount > 0 && <span className="nav-activity-badge" title={`${unreadActivityCount} công việc có diễn biến mới`} aria-label={`${unreadActivityCount} công việc có diễn biến mới`}><i className="nav-activity-pulse" aria-hidden="true" /><b>{unreadActivityCount > 99 ? '99+' : unreadActivityCount}</b></span>}</button></>}
       </div>{(canReview || isSystemAdmin) && <><div className="navlabel nav-section">Quản trị</div><div className="sub root-sub">{canReview && <button className={page === 'approvals' ? 'on' : ''} onClick={() => navigate('approvals')}>Chờ duyệt</button>}{isSystemAdmin && <button className={page === 'users' ? 'on' : ''} onClick={() => navigate('users')}>Quản lý người dùng</button>}</div></>}</nav></div>
       <div className="clock"><b>{clock.toLocaleTimeString('vi-VN')}</b><span>{clock.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}</span></div>
     </aside>
-      <div className="main"><header className="top"><span className="top-spacer" />{projectPage && <div className="chip">{project.code}</div>}<NotificationBell items={notifications} loading={notificationsLoading} onOpen={openNotification} onMarkAllSeen={markAllNotificationsAsSeen} /><div className="whoami"><div><b>{profile.full_name}</b><span>{isSystemAdmin ? 'Quản trị hệ thống' : canManageProject ? 'Quản trị dự án' : profile.is_department_admin ? 'Quản trị phòng/ban' : 'Nhân viên'}</span></div><div className="av account-department-tag">{isSystemAdmin ? 'ADMIN' : profile.department?.code || '—'}</div>{profile.username !== 'admin' && <button className="logout-mini" onClick={() => setShowChangePassword(true)}>Đổi mật khẩu</button>}<button className="logout-mini" onClick={() => void signOut()}>Đăng xuất</button></div></header>
-      <main className="view">{page === 'projects' && <PortfolioPage isManager={isSystemAdmin} isDepartmentAdmin={profile.is_department_admin} onOpen={openProject} />}{page === 'overview' && project && <ProjectOverview project={project} onBack={backToPortfolio} onOpenWork={(workItemId) => void openWorkItem(workItemId)} />}{page === 'gantt' && project && <GanttView project={project} profile={profile} initialWorkItemId={selectedWorkItemId} onSelectedWorkItemChange={updateSelectedWorkItem} onBack={backToPortfolio} onDirtyChange={trackDirty} onUnreadCountChange={setUnreadActivityCount} />}{page === 'milestones' && project && <MilestonesView project={project} isManager={canManageProject} onBack={backToPortfolio} onDirtyChange={trackDirty} />}{page === 'activity' && project && <ProjectActivity project={project} profile={profile} canViewDeleteAudit={canManageProject} onBack={backToPortfolio} onOpenGantt={(workItemId) => void openWorkItem(workItemId)} onSeen={clearUnreadActivity} />}{page === 'approvals' && canReview && <ApprovalsView isManager />}{page === 'users' && isSystemAdmin && <div className="users-host"><UsersPage /></div>}</main>
+      <div className="main"><header className="top">
+        {isHeadquartersUser ? (
+          <div className="branch-selector-wrap" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>Giám sát chi nhánh:</span>
+            <select
+              className="branch-select"
+              value={selectedBranchId || ''}
+              onChange={(e) => setSelectedBranchId(e.target.value || null)}
+              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card-bg, #fff)', fontSize: 13 }}
+            >
+              <option value="">Toàn bộ Tập đoàn (Tất cả)</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.code}){b.is_headquarters ? ' ⭐' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : profile.branch ? (
+          <div className="chip branch-badge" title={profile.branch.name}>
+            📍 {profile.branch.name}
+          </div>
+        ) : null}
+        <span className="top-spacer" />{projectPage && <div className="chip">{project.code}</div>}<NotificationBell items={notifications} loading={notificationsLoading} onOpen={openNotification} onMarkAllSeen={markAllNotificationsAsSeen} /><div className="whoami"><div><b>{profile.full_name}</b><span>{isSystemAdmin ? 'Quản trị hệ thống' : isBranchAdmin ? 'Quản trị Chi nhánh' : canManageProject ? 'Quản trị dự án' : profile.is_department_admin ? 'Quản trị phòng/ban' : 'Nhân viên'}</span></div><div className="av account-department-tag">{isSystemAdmin ? 'ADMIN' : profile.department?.code || '—'}</div>{profile.username !== 'admin' && <button className="logout-mini" onClick={() => setShowChangePassword(true)}>Đổi mật khẩu</button>}<button className="logout-mini" onClick={() => void signOut()}>Đăng xuất</button></div></header>
+      <main className="view">{page === 'projects' && <PortfolioPage isManager={isSystemAdmin} isBranchAdmin={isBranchAdmin} isDepartmentAdmin={profile.is_department_admin} currentBranchId={activeBranchId} branches={branches} onOpen={openProject} />}{page === 'overview' && project && <ProjectOverview project={project} onBack={backToPortfolio} onOpenWork={(workItemId) => void openWorkItem(workItemId)} />}{page === 'gantt' && project && <GanttView project={project} profile={profile} initialWorkItemId={selectedWorkItemId} onSelectedWorkItemChange={updateSelectedWorkItem} onBack={backToPortfolio} onDirtyChange={trackDirty} onUnreadCountChange={setUnreadActivityCount} />}{page === 'milestones' && project && <MilestonesView project={project} isManager={canManageProject} onBack={backToPortfolio} onDirtyChange={trackDirty} />}{page === 'activity' && project && <ProjectActivity project={project} profile={profile} canViewDeleteAudit={canManageProject} onBack={backToPortfolio} onOpenGantt={(workItemId) => void openWorkItem(workItemId)} onSeen={clearUnreadActivity} />}{page === 'approvals' && canReview && <ApprovalsView isManager />}{page === 'users' && isSystemAdmin && <div className="users-host"><UsersPage /></div>}</main>
     </div>{showChangePassword && profile.username !== 'admin' && <ChangePasswordDialog onClose={() => setShowChangePassword(false)} />}
   </div>
 }

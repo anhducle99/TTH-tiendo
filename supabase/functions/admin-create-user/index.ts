@@ -15,6 +15,8 @@ interface RequestBody {
   password?: string
   role?: AppRole
   active?: boolean
+  branchId?: string | null
+  isBranchAdmin?: boolean
   departmentId?: string | null
   isDepartmentAdmin?: boolean
 }
@@ -51,11 +53,14 @@ Deno.serve(async (request) => {
   })
   const { data: callerProfile } = await adminClient
     .from('profiles')
-      .select('role, active')
+      .select('role, active, branch_id, is_branch_admin')
     .eq('id', callerData.user.id)
     .maybeSingle()
 
-  if (callerProfile?.role !== 'manager' || !callerProfile.active) {
+  const isSuperAdmin = callerProfile?.role === 'manager'
+  const isBranchAdmin = Boolean(callerProfile?.is_branch_admin && callerProfile?.branch_id)
+
+  if ((!isSuperAdmin && !isBranchAdmin) || !callerProfile?.active) {
     return json({ error: 'Forbidden' }, 403)
   }
 
@@ -68,8 +73,10 @@ Deno.serve(async (request) => {
 
   const action = body.action ?? 'create'
   const password = body.password ?? ''
-  const role = body.role === 'manager' ? 'manager' : 'employee'
+  const role = body.role === 'manager' && isSuperAdmin ? 'manager' : 'employee'
   const fullName = body.fullName?.trim() ?? ''
+  const branchId = isSuperAdmin ? (body.branchId || null) : callerProfile.branch_id
+  const isTargetBranchAdmin = isSuperAdmin ? Boolean(body.isBranchAdmin) : false
   const departmentId = body.departmentId || null
   const isDepartmentAdmin = role === 'employee' && Boolean(body.isDepartmentAdmin)
 
@@ -91,7 +98,16 @@ Deno.serve(async (request) => {
 
     const { error: profileError } = await callerClient
       .from('profiles')
-      .update({ username, full_name: fullName, role, department_id: departmentId, is_department_admin: isDepartmentAdmin, active: true })
+      .update({
+        username,
+        full_name: fullName,
+        role,
+        branch_id: branchId,
+        is_branch_admin: isTargetBranchAdmin,
+        department_id: departmentId,
+        is_department_admin: isDepartmentAdmin,
+        active: true
+      })
       .eq('id', created.user.id)
 
     if (profileError) {
@@ -105,7 +121,7 @@ Deno.serve(async (request) => {
 
   const { data: targetProfile, error: targetError } = await adminClient
     .from('profiles')
-    .select('id, username, full_name, role, department_id, is_department_admin, active')
+    .select('id, username, full_name, role, branch_id, is_branch_admin, department_id, is_department_admin, active')
     .eq('id', body.targetUserId)
     .maybeSingle()
   if (targetError || !targetProfile) return json({ error: 'Không tìm thấy tài khoản.' }, 404)
@@ -114,12 +130,27 @@ Deno.serve(async (request) => {
     return json({ error: 'Tài khoản admin gốc được bảo vệ và không thể chỉnh sửa.' }, 400)
   }
 
+  if (!isSuperAdmin && targetProfile.branch_id !== callerProfile.branch_id) {
+    return json({ error: 'Chỉ được quản lý tài khoản thuộc chi nhánh của mình.' }, 403)
+  }
+
   if (action === 'update_profile') {
     if (fullName.length < 2 || fullName.length > 100) return json({ error: 'Họ và tên phải có từ 2 đến 100 ký tự.' }, 400)
     if (role === 'employee' && !departmentId) return json({ error: 'Nhân viên phải được gắn với một phòng/ban.' }, 400)
     if (targetProfile.id === callerData.user.id && role !== targetProfile.role) return json({ error: 'Không được tự thay đổi vai trò.' }, 400)
 
-    const { error } = await callerClient.from('profiles').update({ full_name: fullName, role, department_id: departmentId, is_department_admin: isDepartmentAdmin }).eq('id', targetProfile.id)
+    const updatePayload: Record<string, unknown> = {
+      full_name: fullName,
+      role,
+      department_id: departmentId,
+      is_department_admin: isDepartmentAdmin
+    }
+    if (isSuperAdmin) {
+      updatePayload.branch_id = branchId
+      updatePayload.is_branch_admin = isTargetBranchAdmin
+    }
+
+    const { error } = await callerClient.from('profiles').update(updatePayload).eq('id', targetProfile.id)
     if (error) return json({ error: error.message }, 400)
     return json({ ok: true })
   }

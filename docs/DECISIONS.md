@@ -4,7 +4,7 @@ Ghi các quyết định ảnh hưởng đến phạm vi, dữ liệu, kiến tr
 
 | Ngày | Quyết định | Lý do | Ảnh hưởng |
 |---|---|---|---|
-| 2026-09-08 | Tạo repository độc lập ngoài workspace OpenClaw | Tách source code, Git và dependency khỏi dữ liệu vận hành của trợ lý | Giảm nguy cơ commit nhầm và làm nhiễu context |
+| 2026-09-08 | Tạo repository độc lập | Tách source code, Git và dependency thành kho lưu trữ riêng | Giảm nguy cơ commit nhầm và tối ưu quản lý mã nguồn |
 | 2026-09-09 | Dùng modular monolith React + TypeScript + Vite | Đủ rõ ràng để bảo trì nhưng không tạo thêm độ phức tạp của microservice | Prototype cũ được giữ trong `prototype/`; V2 có source và build riêng |
 | 2026-09-09 | Dùng Supabase Auth, PostgreSQL và Storage cho MVP | Có gói miễn phí, cung cấp backend cần thiết và hỗ trợ RLS | Cần cấu hình dự án Supabase và có phương án export vì Free Plan không có automatic backup |
 | 2026-09-09 | Hai vai trò nghiệp vụ: quản trị viên và nhân viên | Phù hợp quy trình hiện tại | Quản trị viên quản lý/duyệt; nhân viên xem tất cả nhưng chỉ cập nhật việc mình tham gia |
@@ -58,6 +58,7 @@ Ghi các quyết định ảnh hưởng đến phạm vi, dữ liệu, kiến tr
 | 2026-09-12 | Tách phân công người tham gia khỏi quyền sửa cấu trúc kế hoạch | File Excel chính thức không có sẵn người tham gia, trong khi Quản trị phòng/ban nắm nhân sự thực hiện của đơn vị | Quản trị phòng chủ trì được chọn nhân sự của mọi đơn vị liên quan; Quản trị phòng phối hợp chỉ thay đổi nhân sự của chính đơn vị mình; backend bảo toàn phân công của các đơn vị khác |
 | 2026-09-12 | Thiết kế phân quyền tương lai không đóng cứng bốn vai trò hiện tại | Vận hành có thể phát sinh TGĐ, Thư ký, Trưởng phòng và các vai trò nghiệp vụ khác | Chỉ tài khoản quản trị gốc là vai trò hệ thống cố định; các vai trò nghiệp vụ dùng bộ quyền cấu hình được, còn Quản trị dự án được gắn theo từng dự án |
 | 2026-09-12 | Chuẩn hóa phản hồi sau thao tác bằng thông báo nổi | Nhiều nút chỉ đóng panel hoặc tải lại dữ liệu khiến người dùng không biết thao tác thành công hay thất bại | Dùng một hệ thống thông báo chung cho tạo, lưu, xóa, import/export, bằng chứng, diễn biến, xét duyệt, mật khẩu và quản lý tài khoản; thông báo tự ẩn, có thể đóng thủ công và không bật cho lỗi tự làm mới nền |
+| 2026-09-14 | Mở rộng hệ thống hỗ trợ Đa Chi Nhánh và Đa Phòng Ban phân tán | Chi nhánh hoạt động độc lập, phòng ban trực thuộc từng chi nhánh; cô lập dữ liệu giữa các chi nhánh | Tạo bảng `branches`, bổ sung `branch_id` vào `departments`, `projects`, `profiles`. Super Admin có Branch Switcher; Quản trị Chi nhánh (`is_branch_admin`) tự quản trị chi nhánh mình; nhân sự chi nhánh chỉ thấy dự án & phòng ban nội bộ |
 # Hành vi panel sau thao tác (2026-09-13)
 
 - Lưu thông tin hoặc lưu phân công thành công: đóng panel và thông báo thành công.

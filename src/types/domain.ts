@@ -8,11 +8,23 @@ export type WorkItemStatus =
   | 'pending_approval'
   | 'completed'
 
+export interface Branch {
+  id: string
+  code: string
+  name: string
+  address?: string | null
+  is_headquarters?: boolean
+  active: boolean
+}
+
 export interface Profile {
   id: string
   username: string
   full_name: string
   role: AppRole
+  branch_id: string | null
+  branch?: Branch | null
+  is_branch_admin: boolean
   department_id: string | null
   department: Department | null
   is_department_admin: boolean
@@ -21,6 +33,7 @@ export interface Profile {
 
 export interface Department {
   id: string
+  branch_id: string
   code: string
   name: string
   active: boolean
@@ -30,6 +43,8 @@ export type UserProfile = Profile
 
 export interface Project {
   id: string
+  branch_id: string
+  branch?: Branch | null
   code: string
   name: string
   site: string | null

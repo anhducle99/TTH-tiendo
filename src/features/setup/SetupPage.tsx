@@ -10,7 +10,16 @@ export function SetupPage() {
           key của Supabase.
         </p>
         <div className="alert info">
-          Ứng dụng không sử dụng dữ liệu giả hoặc localStorage làm nguồn dữ liệu nghiệp vụ.
+          Ứng dụng đang đợi cấu hình kết nối cơ sở dữ liệu Supabase để chạy với dữ liệu thực tế.
+        </div>
+        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <a
+            href="/prototype.html"
+            className="primary-button"
+            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            Xem trước giao diện & dữ liệu mẫu (Prototype)
+          </a>
         </div>
       </section>
     </main>

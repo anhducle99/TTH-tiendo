@@ -1,6 +1,6 @@
 # Tiến độ dự án PTPK
 
-Repository độc lập để phân tích, thiết kế và phát triển ứng dụng **Tiến độ dự án PTPK** bằng Codex.
+Hệ thống quản lý và theo dõi tiến độ dự án phòng khám đa chi nhánh, đa phòng ban.
 
 ## Trạng thái
 
