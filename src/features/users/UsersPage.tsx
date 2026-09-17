@@ -29,6 +29,9 @@ export function UsersPage() {
   const [page, setPage] = useState(1)
 
   const isSuperAdmin = profile?.role === 'manager'
+  const isBranchAdmin = Boolean(profile?.is_branch_admin)
+  const activeBranchId = isSuperAdmin ? form.branchId : (profile?.branch_id ?? '')
+  const currentBranchName = profile?.branch?.name || 'Chi nhánh trực thuộc'
 
   const loadData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
@@ -49,15 +52,21 @@ export function UsersPage() {
   useAutoRefresh(() => loadData(false), { enabled: !dialog && !submitting && !busyUserId, intervalMs: 30_000 })
 
   const availableDepartments = useMemo(() => {
-    if (!form.branchId) return departments
-    return departments.filter((d) => d.branch_id === form.branchId)
-  }, [departments, form.branchId])
+    const branchFilter = isSuperAdmin ? form.branchId : profile?.branch_id
+    if (!branchFilter) return departments
+    return departments.filter((d) => d.branch_id === branchFilter)
+  }, [departments, form.branchId, isSuperAdmin, profile?.branch_id])
+
+  const scopedUsers = useMemo(() => {
+    if (isSuperAdmin) return users
+    return users.filter((u) => u.branch_id === profile?.branch_id)
+  }, [users, isSuperAdmin, profile?.branch_id])
 
   const filteredUsers = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase('vi')
-    if (!keyword) return users
-    return users.filter((user) => `${user.full_name} ${user.username} ${user.branch?.name ?? ''} ${user.department?.name ?? ''}`.toLocaleLowerCase('vi').includes(keyword))
-  }, [query, users])
+    if (!keyword) return scopedUsers
+    return scopedUsers.filter((user) => `${user.full_name} ${user.username} ${user.branch?.name ?? ''} ${user.department?.name ?? ''}`.toLocaleLowerCase('vi').includes(keyword))
+  }, [query, scopedUsers])
   const pageCount = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
   const visibleUsers = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
@@ -114,16 +123,18 @@ export function UsersPage() {
   }
 
   return <section>
-    <div className="page-heading"><div><p className="eyebrow">QUẢN TRỊ HỆ THỐNG</p><h1>Quản lý người dùng</h1><p className="muted">Quản lý tài khoản theo Chi nhánh và Phòng ban trực thuộc.</p></div></div>
+    <div className="page-heading"><div><p className="eyebrow">{isSuperAdmin ? 'QUẢN TRỊ HỆ THỐNG' : 'QUẢN TRỊ CHI NHÁNH'}</p><h1>{isSuperAdmin ? 'Quản lý người dùng' : `Quản lý nhân sự · ${currentBranchName}`}</h1><p className="muted">{isSuperAdmin ? 'Quản lý tài khoản theo Chi nhánh và Phòng ban trực thuộc.' : `Quản lý và cấp tài khoản nhân sự trực thuộc ${currentBranchName}.`}</p></div></div>
     <div className="admin-grid">
       <form className="content-card user-form" onSubmit={handleSubmit}>
-        <div><h2>Tạo tài khoản</h2><p className="muted">Cấp tài khoản và phân quyền Chi nhánh / Phòng ban.</p></div>
+        <div><h2>Tạo tài khoản</h2><p className="muted">{isSuperAdmin ? 'Cấp tài khoản và phân quyền Chi nhánh / Phòng ban.' : `Cấp tài khoản nhân sự thuộc ${currentBranchName}.`}</p></div>
         <label>Họ và tên<input required maxLength={100} autoComplete="name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Nguyễn Văn An" /></label>
         <label>Tài khoản<input required autoComplete="off" pattern="[a-z0-9._-]{3,32}" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase() })} placeholder="nguyenvanan" /></label>
         <label>Mật khẩu tạm<input required minLength={8} type="password" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
         
-        {isSuperAdmin && (
+        {isSuperAdmin ? (
           <label>Chi nhánh<select value={form.branchId} onChange={(event) => setForm({ ...form, branchId: event.target.value, departmentId: '' })}><option value="">Chưa gắn chi nhánh (Hội sở/Toàn hệ thống)</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name} ({b.code})</option>)}</select></label>
+        ) : (
+          <label>Chi nhánh trực thuộc<input disabled value={`${currentBranchName} (${profile?.branch?.code || 'CN'})`} /></label>
         )}
 
         <label>Phòng/ban<select required={form.role === 'employee'} value={form.departmentId} onChange={(event) => setForm({ ...form, departmentId: event.target.value })}><option value="">Chưa gắn phòng/ban</option>{availableDepartments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label>
@@ -141,7 +152,7 @@ export function UsersPage() {
       </form>
 
       <div className="content-card user-list-card">
-        <div className="card-heading"><div><h2>Danh sách tài khoản</h2><small>Không xóa tài khoản để giữ lịch sử thao tác.</small></div><span>{query ? `${filteredUsers.length}/${users.length}` : users.length} người</span></div>
+        <div className="card-heading"><div><h2>Danh sách tài khoản</h2><small>Không xóa tài khoản để giữ lịch sử thao tác.</small></div><span>{query ? `${filteredUsers.length}/${scopedUsers.length}` : scopedUsers.length} người</span></div>
         <div className="user-list-toolbar"><input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1) }} placeholder="Tìm theo họ tên, tài khoản, chi nhánh, phòng ban…" aria-label="Tìm người dùng" /></div>
         {(error || success) && <div className={`user-page-alert alert ${error ? 'error' : 'success'}`}>{error ?? success}</div>}
         {loading && <div className="state-message">Đang tải người dùng…</div>}

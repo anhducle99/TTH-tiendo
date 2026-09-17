@@ -132,11 +132,44 @@ Khi nhấp chuột vào một công việc trên danh sách Gantt, ngăn chi ti�
 - Quản lý các sự kiện bàn giao mấu chốt: *Hoàn thành thiết kế, Hoàn thành dự toán, Lựa chọn xong nhà thầu, Đóng điện trạm biến áp, Nghiệm thu PCCC, Cấp giấy phép hoạt động*.
 - Giúp Ban Lãnh đạo nắm bắt tiến độ cấp cao mà không cần đọc hết 132 đầu việc chi tiết.
 
-### Nhật ký diễn biến (Activity Log)
-- Ghi lại toàn bộ lịch sử trao đổi, nhật ký vướng mắc hiện trường theo từng ngày.
-- Mọi thành viên tham gia có thể để lại ghi chú, nêu nguyên nhân khách quan/chủ quan nếu có phát sinh chậm trễ để các bên phối hợp xử lý kịp thời.
+---
+
+## 7. Phân cấp Quản lý Người dùng & Chi nhánh con
+
+Hệ thống hỗ trợ phân cấp quản trị rõ ràng giữa Trụ sở chính (HQ) và Chi nhánh trực thuộc:
+
+```
++-------------------------------------------------------------------------------+
+| PHÂN CẤP QUẢN TRỊ NGƯỜI DÙNG                                                  |
++-------------------------------------------------------------------------------+
+| 1. Quản trị hệ thống (HQ Super Admin):                                        |
+|    - Toàn quyền tạo và quản lý tài khoản ở tất cả các Chi nhánh & Phòng ban.  |
+|    - Gán quyền Quản trị Chi nhánh (Giám đốc Chi nhánh) & Quản trị Hệ thống.   |
+|                                                                               |
+| 2. Quản trị Chi nhánh (Branch Admin):                                         |
+|    - Xuất hiện menu "Quản lý người dùng" riêng cho phạm vi Chi nhánh.         |
+|    - Tạo, chỉnh sửa, đặt lại mật khẩu và khóa/mở khóa tài khoản nhân sự       |
+|      trực thuộc chính Chi nhánh của mình.                                     |
+|    - Danh sách phòng ban và nhân sự được cô lập tuyệt đối theo chi nhánh.    |
+|                                                                               |
+| 3. Quản trị phòng/ban (Department Admin):                                     |
+|    - Trưởng phòng phụ trách phân công nhân sự và duyệt công việc nội bộ.      |
++-------------------------------------------------------------------------------+
+```
+
+### Các thao tác quản lý nhân sự:
+1. **Tạo tài khoản mới:**
+   - Nhập Họ và tên, tên tài khoản (3–32 ký tự chữ thường, số, dấu chấm/gạch).
+   - Đặt mật khẩu tạm (tối thiểu 8 ký tự).
+   - Chọn Phòng/ban phụ trách và vai trò tương ứng (Nhân viên, Trưởng phòng/ban).
+2. **Khóa / Mở lại tài khoản:**
+   - Khi nhân sự nghỉ việc hoặc tạm dừng công tác, bấm nút **Khóa** để bảo toàn lịch sử dữ liệu và vô hiệu hóa đăng nhập. Bấm **Mở lại** khi nhân sự tiếp tục làm việc.
+3. **Đặt lại mật khẩu:**
+   - Hỗ trợ cấp lại mật khẩu mới cho nhân sự khi quên mật khẩu qua kênh nội bộ an toàn.
+   - *Lưu ý:* Tài khoản `admin` gốc luôn được bảo vệ hoàn toàn, không thể bị khóa hoặc sửa đổi từ giao diện.
 
 ---
 
 *Tài liệu này được cập nhật định kỳ tương ứng với từng phiên bản nâng cấp chức năng của phần mềm.*
+
 
