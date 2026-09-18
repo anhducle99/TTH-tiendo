@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/confirmContext'
 import { useAuth } from '../auth/authContext'
 import type { AppRole, Branch, Department, UserProfile } from '../../types/domain'
 import { normalizeUsername, USERNAME_PATTERN } from '../../lib/username'
-import { createUser, listBranches, listDepartments, listUsers, resetUserPassword, setUserActive, updateUserProfile } from './userService'
+import { createBranch, createUser, listBranches, listDepartments, listUsers, resetUserPassword, setUserActive, updateBranch, updateUserProfile } from './userService'
 import { useAutoRefresh } from '../../lib/useAutoRefresh'
 import { useToast } from '../../components/toastContext'
 
@@ -27,6 +27,14 @@ export function UsersPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+
+  const [activeTab, setActiveTab] = useState<'users' | 'branches'>('users')
+  const [branchCode, setBranchCode] = useState('')
+  const [branchName, setBranchName] = useState('')
+  const [branchAddress, setBranchAddress] = useState('')
+  const [branchIsHq, setBranchIsHq] = useState(false)
+  const [branchSubmitting, setBranchSubmitting] = useState(false)
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
 
   const isSuperAdmin = profile?.role === 'manager'
   const isBranchAdmin = Boolean(profile?.is_branch_admin)
@@ -122,20 +130,143 @@ export function UsersPage() {
     finally { setBusyUserId(null) }
   }
 
+  const handleCreateBranch = async (event: FormEvent) => {
+    event.preventDefault()
+    setError(null)
+    setSuccess(null)
+    const code = branchCode.trim().toUpperCase()
+    const name = branchName.trim()
+    if (!code || !name) {
+      const msg = 'Vui lòng nhập đầy đủ Mã chi nhánh và Tên chi nhánh.'
+      setError(msg)
+      notify(msg, 'error')
+      return
+    }
+    setBranchSubmitting(true)
+    try {
+      await createBranch({
+        code,
+        name,
+        address: branchAddress,
+        isHeadquarters: branchIsHq
+      })
+      const msg = `Đã tạo chi nhánh ${name} (${code}) thành công.`
+      setSuccess(msg)
+      notify(msg)
+      setBranchCode('')
+      setBranchName('')
+      setBranchAddress('')
+      setBranchIsHq(false)
+      await loadData()
+    } catch {
+      const msg = 'Không tạo được chi nhánh. Kiểm tra mã chi nhánh có bị trùng lặp hay không.'
+      setError(msg)
+      notify(msg, 'error')
+    } finally {
+      setBranchSubmitting(false)
+    }
+  }
+
+  const toggleBranchActive = async (branch: Branch) => {
+    const nextActive = !branch.active
+    const accepted = await confirm(nextActive ? {
+      title: 'Mở lại chi nhánh?', message: `Chi nhánh ${branch.name} sẽ hoạt động trở lại.`, confirmLabel: 'Mở lại',
+    } : {
+      title: 'Tạm khóa chi nhánh?', message: `Chi nhánh ${branch.name} sẽ tạm dừng hiển thị trong danh mục lựa chọn.`, confirmLabel: 'Tạm khóa', tone: 'danger',
+    })
+    if (!accepted) return
+    setError(null)
+    setSuccess(null)
+    try {
+      await updateBranch(branch.id, { active: nextActive })
+      const msg = `Đã ${nextActive ? 'mở lại' : 'tạm khóa'} chi nhánh ${branch.name}.`
+      setSuccess(msg)
+      notify(msg)
+      await loadData()
+    } catch {
+      const msg = `Không thể cập nhật chi nhánh ${branch.name}.`
+      setError(msg)
+      notify(msg, 'error')
+    }
+  }
+
   return <section>
-    <div className="page-heading"><div><p className="eyebrow">{isSuperAdmin ? 'QUẢN TRỊ HỆ THỐNG' : 'QUẢN TRỊ CHI NHÁNH'}</p><h1>{isSuperAdmin ? 'Quản lý người dùng' : `Quản lý nhân sự · ${currentBranchName}`}</h1><p className="muted">{isSuperAdmin ? 'Quản lý tài khoản theo Chi nhánh và Phòng ban trực thuộc.' : `Quản lý và cấp tài khoản nhân sự trực thuộc ${currentBranchName}.`}</p></div></div>
-    <div className="admin-grid">
-      <form className="content-card user-form" onSubmit={handleSubmit}>
-        <div><h2>Tạo tài khoản</h2><p className="muted">{isSuperAdmin ? 'Cấp tài khoản và phân quyền Chi nhánh / Phòng ban.' : `Cấp tài khoản nhân sự thuộc ${currentBranchName}.`}</p></div>
-        <label>Họ và tên<input required maxLength={100} autoComplete="name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Nguyễn Văn An" /></label>
-        <label>Tài khoản<input required autoComplete="off" pattern="[a-z0-9._-]{3,32}" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase() })} placeholder="nguyenvanan" /></label>
-        <label>Mật khẩu tạm<input required minLength={8} type="password" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
-        
-        {isSuperAdmin ? (
-          <label>Chi nhánh<select value={form.branchId} onChange={(event) => setForm({ ...form, branchId: event.target.value, departmentId: '' })}><option value="">Chưa gắn chi nhánh (Hội sở/Toàn hệ thống)</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name} ({b.code})</option>)}</select></label>
-        ) : (
-          <label>Chi nhánh trực thuộc<input disabled value={`${currentBranchName} (${profile?.branch?.code || 'CN'})`} /></label>
-        )}
+    <div className="page-heading">
+      <div>
+        <p className="eyebrow">{isSuperAdmin ? 'QUẢN TRỊ HỆ THỐNG' : 'QUẢN TRỊ CHI NHÁNH'}</p>
+        <h1>{isSuperAdmin ? 'Quản trị Người dùng & Chi nhánh' : `Quản lý nhân sự · ${currentBranchName}`}</h1>
+        <p className="muted">{isSuperAdmin ? 'Quản lý danh mục Chi nhánh, Phòng ban và Tài khoản người dùng toàn hệ thống.' : `Quản lý và cấp tài khoản nhân sự trực thuộc ${currentBranchName}.`}</p>
+      </div>
+    </div>
+
+    {isSuperAdmin && (
+      <div className="project-list-tabs" role="tablist" style={{ marginBottom: 20 }}>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'users'}
+          className={`btn ${activeTab === 'users' ? 'pri' : ''}`}
+          onClick={() => { setActiveTab('users'); setError(null); setSuccess(null) }}
+        >
+          👥 Tài khoản người dùng ({scopedUsers.length})
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'branches'}
+          className={`btn ${activeTab === 'branches' ? 'pri' : ''}`}
+          onClick={() => { setActiveTab('branches'); setError(null); setSuccess(null) }}
+        >
+          🏢 Danh mục Chi nhánh ({branches.length})
+        </button>
+      </div>
+    )}
+
+    {activeTab === 'branches' && isSuperAdmin ? (
+      <div className="admin-grid">
+        <form className="content-card user-form" onSubmit={handleCreateBranch}>
+          <div><h2>Thêm chi nhánh mới</h2><p className="muted">Tạo mới chi nhánh/cơ sở trực thuộc tập đoàn.</p></div>
+          <label>Mã chi nhánh (Viết tắt)<input required maxLength={20} value={branchCode} onChange={(e) => setBranchCode(e.target.value.toUpperCase())} placeholder="CN-HT, CN-QB, PK-KT..." /></label>
+          <label>Tên chi nhánh / Đơn vị<input required maxLength={150} value={branchName} onChange={(e) => setBranchName(e.target.value)} placeholder="Bệnh viện Đa khoa TTH Hà Tĩnh" /></label>
+          <label>Địa chỉ / Địa bàn<input maxLength={255} value={branchAddress} onChange={(e) => setBranchAddress(e.target.value)} placeholder="Số 01 Ngô Quyền, TP. Hà Tĩnh..." /></label>
+          <label className="user-check"><input type="checkbox" checked={branchIsHq} onChange={(e) => setBranchIsHq(e.target.checked)} /> Đây là Trụ sở chính / Tổng công ty (HQ)</label>
+          <button className="primary-button" disabled={branchSubmitting} type="submit">{branchSubmitting ? 'Đang tạo…' : '+ Thêm chi nhánh'}</button>
+        </form>
+
+        <div className="content-card user-list-card">
+          <div className="card-heading"><div><h2>Danh sách Chi nhánh</h2><small>Các chi nhánh và cơ sở điều hành của Tập đoàn TTH.</small></div><span>{branches.length} chi nhánh</span></div>
+          {(error || success) && <div className={`user-page-alert alert ${error ? 'error' : 'success'}`}>{error ?? success}</div>}
+          <div className="table-wrap"><table className="users-table">
+            <thead><tr><th>Mã</th><th>Tên chi nhánh</th><th>Địa chỉ</th><th>Phân loại</th><th>Trạng thái</th><th aria-label="Thao tác" /></tr></thead>
+            <tbody>{branches.map((b) => (
+              <tr key={b.id}>
+                <td><strong>{b.code}</strong></td>
+                <td><b>{b.name}</b></td>
+                <td>{b.address || '—'}</td>
+                <td>{b.is_headquarters ? <span className="chip" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600 }}>⭐ Trụ sở chính (HQ)</span> : <span className="muted">Chi nhánh cơ sở</span>}</td>
+                <td><span className={`status ${b.active ? 'active' : 'archived'}`}>{b.active ? 'Hoạt động' : 'Tạm dừng'}</span></td>
+                <td><div className="user-actions">
+                  <button className="btn" onClick={() => setEditingBranch(b)}>Sửa</button>
+                  {!b.is_headquarters && (
+                    <button className={`btn ${b.active ? 'danger-outline' : ''}`} onClick={() => void toggleBranchActive(b)}>{b.active ? 'Tạm khóa' : 'Mở lại'}</button>
+                  )}
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        </div>
+      </div>
+    ) : (
+      <div className="admin-grid">
+        <form className="content-card user-form" onSubmit={handleSubmit}>
+          <div><h2>Tạo tài khoản</h2><p className="muted">{isSuperAdmin ? 'Cấp tài khoản và phân quyền Chi nhánh / Phòng ban.' : `Cấp tài khoản nhân sự thuộc ${currentBranchName}.`}</p></div>
+          <label>Họ và tên<input required maxLength={100} autoComplete="name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Nguyễn Văn An" /></label>
+          <label>Tài khoản<input required autoComplete="off" pattern="[a-z0-9._-]{3,32}" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase() })} placeholder="nguyenvanan" /></label>
+          <label>Mật khẩu tạm<input required minLength={8} type="password" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
+          
+          {isSuperAdmin ? (
+            <label>Chi nhánh<select value={form.branchId} onChange={(event) => setForm({ ...form, branchId: event.target.value, departmentId: '' })}><option value="">Chưa gắn chi nhánh (Hội sở/Toàn hệ thống)</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name} ({b.code})</option>)}</select></label>
+          ) : (
+            <label>Chi nhánh trực thuộc<input disabled value={`${currentBranchName} (${profile?.branch?.code || 'CN'})`} /></label>
+          )}
 
         <label>Phòng/ban<select required={form.role === 'employee'} value={form.departmentId} onChange={(event) => setForm({ ...form, departmentId: event.target.value })}><option value="">Chưa gắn phòng/ban</option>{availableDepartments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label>
         <label>Cấp quyền<select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AppRole, isDepartmentAdmin: event.target.value === 'manager' ? false : form.isDepartmentAdmin, isBranchAdmin: event.target.value === 'manager' ? false : form.isBranchAdmin })}><option value="employee">Nhân sự / Quản trị chi nhánh - phòng ban</option>{isSuperAdmin && <option value="manager">Quản trị toàn hệ thống (HQ)</option>}</select></label>
@@ -185,12 +316,64 @@ export function UsersPage() {
             </tr>
           })}</tbody>
         </table></div>{pageCount > 1 && <div className="user-pagination"><span>Trang {currentPage}/{pageCount}</span><div><button className="btn" disabled={currentPage === 1} onClick={() => setPage(Math.max(1, currentPage - 1))}>← Trước</button><button className="btn" disabled={currentPage === pageCount} onClick={() => setPage(Math.min(pageCount, currentPage + 1))}>Sau →</button></div></div>}</>}
+        </div>
       </div>
-    </div>
+    )}
 
     {dialog?.kind === 'edit' && <EditUserDialog branches={branches} departments={departments} currentUserId={profile?.id ?? ''} isSuperAdmin={isSuperAdmin} user={dialog.user} onClose={() => setDialog(null)} onSaved={async (message) => { setDialog(null); setSuccess(message); notify(message); await loadData() }} />}
     {dialog?.kind === 'password' && <PasswordDialog user={dialog.user} onClose={() => setDialog(null)} onSaved={(message) => { setDialog(null); setSuccess(message); notify(message) }} />}
+    {editingBranch && <EditBranchDialog branch={editingBranch} onClose={() => setEditingBranch(null)} onSaved={async (message) => { setEditingBranch(null); setSuccess(message); notify(message); await loadData() }} />}
   </section>
+}
+
+function EditBranchDialog({ branch, onClose, onSaved }: { branch: Branch; onClose: () => void; onSaved: (msg: string) => Promise<void> }) {
+  const notify = useToast()
+  const [name, setName] = useState(branch.name)
+  const [address, setAddress] = useState(branch.address || '')
+  const [isHq, setIsHq] = useState(branch.is_headquarters)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setError('Tên chi nhánh không được để trống.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      await updateBranch(branch.id, {
+        name: trimmedName,
+        address: address.trim() || null,
+        isHeadquarters: isHq
+      })
+      await onSaved(`Đã cập nhật thông tin chi nhánh ${trimmedName}.`)
+    } catch {
+      setError('Không cập nhật được chi nhánh. Vui lòng thử lại.')
+      notify('Không cập nhật được chi nhánh.', 'error')
+      setSaving(false)
+    }
+  }
+
+  return <div className="user-dialog-layer" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <form className="user-dialog" role="dialog" aria-modal="true" onSubmit={save}>
+      <div className="user-dialog-heading">
+        <div><p className="eyebrow">CHỈNH SỬA CHI NHÁNH</p><h2>{branch.code}</h2></div>
+        <button type="button" className="user-dialog-close" aria-label="Đóng" onClick={onClose}>×</button>
+      </div>
+      <label>Mã chi nhánh<input disabled value={branch.code} /></label>
+      <label>Tên chi nhánh / Đơn vị<input required maxLength={150} value={name} onChange={(e) => setName(e.target.value)} autoFocus /></label>
+      <label>Địa chỉ / Địa bàn<input maxLength={255} value={address} onChange={(e) => setAddress(e.target.value)} /></label>
+      <label className="user-check"><input type="checkbox" checked={isHq} onChange={(e) => setIsHq(e.target.checked)} /> Đây là Trụ sở chính / Tổng công ty (HQ)</label>
+      {error && <div className="alert error">{error}</div>}
+      <div className="user-dialog-actions">
+        <button type="button" className="btn" onClick={onClose}>Hủy bỏ</button>
+        <button className="btn pri" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
+      </div>
+    </form>
+  </div>
 }
 
 function EditUserDialog({ branches, currentUserId, isSuperAdmin, user, departments, onClose, onSaved }: { branches: Branch[]; currentUserId: string; isSuperAdmin: boolean; user: UserProfile; departments: Department[]; onClose: () => void; onSaved: (message: string) => Promise<void> }) {

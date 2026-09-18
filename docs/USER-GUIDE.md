@@ -168,8 +168,21 @@ Hệ thống hỗ trợ phân cấp quản trị rõ ràng giữa Trụ sở ch�
    - Hỗ trợ cấp lại mật khẩu mới cho nhân sự khi quên mật khẩu qua kênh nội bộ an toàn.
    - *Lưu ý:* Tài khoản `admin` gốc luôn được bảo vệ hoàn toàn, không thể bị khóa hoặc sửa đổi từ giao diện.
 
+### Quản lý Danh mục Chi nhánh (Dành cho Quản trị viên hệ thống):
+1. **Chuyển sang Tab "Danh mục Chi nhánh":**
+   - Trên thanh tab của trang Quản trị, chọn mục **🏢 Danh mục Chi nhánh**.
+2. **Tạo Chi nhánh mới:**
+   - **Mã chi nhánh:** Nhập mã viết tắt phân biệt (VD: `CN-HT`, `CN-QB`, `PK-KT`...).
+   - **Tên chi nhánh:** Nhập tên đầy đủ (VD: *Bệnh viện Đa khoa TTH Hà Tĩnh*).
+   - **Địa chỉ:** Nhập địa chỉ hoặc địa bàn triển khai.
+   - **Đánh dấu Trụ sở chính (HQ):** Tích chọn nếu đây là cơ quan đầu mối điều phối cấp Tập đoàn.
+3. **Chỉnh sửa & Khóa chi nhánh:**
+   - Bấm **Sửa** để thay đổi tên hoặc địa chỉ.
+   - Bấm **Tạm khóa** đối với chi nhánh tạm dừng hoạt động. Các chi nhánh đang hoạt động sẽ xuất hiện ngay lập tức trong bộ lọc Header, form tạo Kế hoạch cơ sở và form tạo Tài khoản nhân sự.
+
 ---
 
 *Tài liệu này được cập nhật định kỳ tương ứng với từng phiên bản nâng cấp chức năng của phần mềm.*
+
 
 

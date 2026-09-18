@@ -30,11 +30,51 @@ export async function listBranches(): Promise<Branch[]> {
   const { data, error } = await supabase
     .from('branches')
     .select('id, code, name, address, is_headquarters, active')
-    .eq('active', true)
     .order('name')
   if (error) throw error
   return (data ?? []) as Branch[]
 }
+
+export async function createBranch(input: {
+  code: string
+  name: string
+  address?: string
+  isHeadquarters?: boolean
+}): Promise<Branch> {
+  if (!supabase) throw new Error('Chưa cấu hình Supabase.')
+  const { data, error } = await supabase
+    .from('branches')
+    .insert({
+      code: input.code.trim().toUpperCase(),
+      name: input.name.trim(),
+      address: input.address?.trim() || null,
+      is_headquarters: Boolean(input.isHeadquarters),
+      active: true
+    })
+    .select('id, code, name, address, is_headquarters, active')
+    .single()
+  if (error) throw error
+  return data as Branch
+}
+
+export async function updateBranch(
+  id: string,
+  input: { name?: string; address?: string | null; active?: boolean; isHeadquarters?: boolean }
+): Promise<void> {
+  if (!supabase) throw new Error('Chưa cấu hình Supabase.')
+  const payload: Record<string, unknown> = {}
+  if (input.name !== undefined) payload.name = input.name.trim()
+  if (input.address !== undefined) payload.address = input.address?.trim() || null
+  if (input.active !== undefined) payload.active = input.active
+  if (input.isHeadquarters !== undefined) payload.is_headquarters = input.isHeadquarters
+
+  const { error } = await supabase
+    .from('branches')
+    .update(payload)
+    .eq('id', id)
+  if (error) throw error
+}
+
 
 export async function listUsers(): Promise<UserProfile[]> {
   if (!supabase) return []
