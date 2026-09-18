@@ -37,8 +37,6 @@ export function UsersPage() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
 
   const isSuperAdmin = profile?.role === 'manager'
-  const isBranchAdmin = Boolean(profile?.is_branch_admin)
-  const activeBranchId = isSuperAdmin ? form.branchId : (profile?.branch_id ?? '')
   const currentBranchName = profile?.branch?.name || 'Chi nhánh trực thuộc'
 
   const loadData = useCallback(async (showLoading = true) => {
